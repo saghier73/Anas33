@@ -1,0 +1,1275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Grade 3 Math Championship - Term 1</title>
+  <!-- Google Fonts for English Certificate and App text -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Lexend:wght@400;600;700;800&family=Cinzel:wght@600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Canvas Confetti -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <!-- Firebase SDKs (v8 Compact for direct browser compatibility) -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <style>
+    :root {
+      --primary: #2d6a4f;
+      --primary-dark: #1b4332;
+      --accent: #ffb703;
+      --accent-orange: #fb8500;
+      --light-bg: #f8f9fa;
+      --dark-green: #0a3200;
+      --gold-1: #d4af37;
+      --gold-2: #f3e5ab;
+      --gold-dark: #aa7c11;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Lexend', sans-serif;
+    }
+
+    body {
+      background: linear-gradient(135deg, #1b4332 0%, #2d6a4f 50%, #40916c 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 15px;
+      color: #333;
+    }
+
+    .app-container {
+      width: 100%;
+      max-width: 950px;
+      background: #ffffff;
+      border-radius: 24px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Screen Management */
+    .screen {
+      display: none;
+      padding: 35px;
+      animation: fadeIn 0.4s ease-in-out forwards;
+    }
+    .screen.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Start Screen */
+    .hero-banner {
+      text-align: center;
+      margin-bottom: 25px;
+    }
+    .hero-title {
+      font-family: 'Fredoka One', cursive;
+      font-size: 2.3rem;
+      color: var(--primary-dark);
+      text-shadow: 2px 2px 0px var(--accent);
+      margin-bottom: 8px;
+    }
+    .hero-subtitle {
+      color: #555;
+      font-size: 1.05rem;
+      font-weight: 600;
+    }
+
+    .form-group {
+      margin-bottom: 18px;
+    }
+    .form-group label {
+      display: block;
+      font-weight: 700;
+      margin-bottom: 6px;
+      color: var(--primary-dark);
+    }
+    .form-control {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid #b7e4c7;
+      border-radius: 12px;
+      font-size: 1rem;
+      transition: all 0.3s;
+      outline: none;
+    }
+    .form-control:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(45, 106, 79, 0.15);
+    }
+
+    .btn-start {
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(45deg, var(--accent-orange), var(--accent));
+      color: #000;
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.3rem;
+      border: none;
+      border-radius: 16px;
+      cursor: pointer;
+      box-shadow: 0 8px 20px rgba(251, 133, 0, 0.4);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .btn-start:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 25px rgba(251, 133, 0, 0.5);
+    }
+
+    /* Global Live Leaderboard Box */
+    .leaderboard-section {
+      margin-top: 25px;
+      background: #f1f8f5;
+      border: 2px solid #d8f3dc;
+      border-radius: 16px;
+      padding: 15px 20px;
+      max-height: 220px;
+      overflow-y: auto;
+    }
+    .leaderboard-title {
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.1rem;
+      color: var(--primary-dark);
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .leaderboard-list {
+      list-style: none;
+    }
+    .leaderboard-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 10px;
+      border-bottom: 1px solid #e2ece9;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #333;
+    }
+    .leaderboard-item:last-child { border-bottom: none; }
+    .school-tag {
+      font-size: 0.8rem;
+      color: #666;
+      font-weight: 400;
+      display: block;
+    }
+
+    /* Quiz Screen Header & Timer */
+    .quiz-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #e8f5e9;
+      padding: 15px 20px;
+      border-radius: 16px;
+      margin-bottom: 15px;
+    }
+    .info-badge {
+      font-weight: 700;
+      color: var(--primary-dark);
+      font-size: 0.95rem;
+    }
+    .timer-box {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #fff;
+      padding: 8px 16px;
+      border-radius: 30px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      font-weight: 800;
+      font-size: 1.2rem;
+      color: var(--accent-orange);
+    }
+    .timer-box.warning {
+      color: #d90429;
+      animation: pulse 0.8s infinite alternate;
+    }
+    @keyframes pulse {
+      from { transform: scale(1); }
+      to { transform: scale(1.08); }
+    }
+
+    /* Clean Timer Bar */
+    .timer-track-wrapper {
+      position: relative;
+      margin-bottom: 25px;
+    }
+    .progress-bar-container {
+      width: 100%;
+      height: 14px;
+      background: #e0e0e0;
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid #ccc;
+    }
+    .progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, #2a9d8f, #e76f51);
+      width: 100%;
+      transition: width 0.3s linear;
+    }
+
+    /* Question Container */
+    .question-card {
+      background: #fff;
+      border: 2px solid #e8f5e9;
+      border-radius: 20px;
+      padding: 25px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+      margin-bottom: 25px;
+    }
+    .question-info-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .question-counter-badge {
+      background: #e8f5e9;
+      color: var(--primary-dark);
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      font-weight: 800;
+    }
+    .question-title {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #1d3557;
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+
+    .options-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+    }
+    @media (max-width: 600px) {
+      .options-grid { grid-template-columns: 1fr; }
+    }
+
+    .option-btn {
+      padding: 16px 20px;
+      background: #f8f9fa;
+      border: 2px solid #dee2e6;
+      border-radius: 14px;
+      font-size: 1.05rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .option-btn:hover {
+      background: #e8f5e9;
+      border-color: #52b788;
+    }
+    .option-btn.selected {
+      background: #b7e4c7;
+      border-color: var(--primary);
+    }
+    .option-btn.correct {
+      background: #d4edda !important;
+      border-color: #28a745 !important;
+      color: #155724;
+    }
+    .option-btn.wrong {
+      background: #f8d7da !important;
+      border-color: #dc3545 !important;
+      color: #721c24;
+    }
+
+    /* Results Screen */
+    .results-card {
+      text-align: center;
+      padding: 20px;
+    }
+    .score-circle {
+      width: 140px;
+      height: 140px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--accent-orange));
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      margin: 20px auto;
+      color: #fff;
+      font-family: 'Fredoka One', cursive;
+      box-shadow: 0 10px 20px rgba(251, 133, 0, 0.3);
+    }
+    .score-number { font-size: 2.8rem; line-height: 1; }
+    .score-total { font-size: 1rem; opacity: 0.9; }
+
+    .action-btns {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      margin-top: 30px;
+      flex-wrap: wrap;
+    }
+    .btn-action {
+      padding: 14px 28px;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 1rem;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-certificate {
+      background: var(--primary);
+      color: #fff;
+      box-shadow: 0 6px 15px rgba(45, 106, 79, 0.3);
+    }
+    .btn-retry {
+      background: #e9ecef;
+      color: #495057;
+    }
+
+    /* Certificate Styling English Standard Clean Design on White */
+    .certificate-modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.85);
+      z-index: 1000;
+      overflow-y: auto;
+      padding: 20px;
+    }
+    .certificate-modal.active {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    .certificate-container {
+      width: 900px;
+      height: 636px;
+      background: #ffffff;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 25px 60px rgba(0,0,0,0.5);
+      box-sizing: border-box;
+      direction: ltr;
+      font-family: 'Lexend', sans-serif;
+      border: 12px solid #0d3822;
+    }
+
+    .cert-body {
+      position: relative;
+      z-index: 10;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 45px 70px;
+      text-align: center;
+      background: #ffffff;
+    }
+
+    .cert-header-title {
+      font-family: 'Cinzel', serif;
+      font-size: 2.5rem;
+      font-weight: 800;
+      color: #0d3822;
+      margin-top: 5px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .cert-title-divider {
+      width: 200px;
+      height: 2px;
+      background: #d4af37;
+      margin: 8px auto 15px auto;
+      position: relative;
+    }
+    .cert-title-divider::after {
+      content: "♦";
+      position: absolute;
+      top: -11px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: #0d3822;
+      font-size: 12px;
+      background: #fff;
+      padding: 0 6px;
+    }
+
+    .cert-given-to {
+      font-size: 1.2rem;
+      color: #555;
+      margin-bottom: 8px;
+      font-style: italic;
+    }
+
+    .cert-student-name {
+      font-family: 'Cinzel', serif;
+      font-size: 2.3rem;
+      font-weight: 700;
+      color: #0d3822;
+      border-bottom: 2px dashed #b7e4c7;
+      display: inline-block;
+      padding: 0 40px 4px 40px;
+      margin-bottom: 12px;
+    }
+
+    .cert-message {
+      font-size: 1.1rem;
+      line-height: 1.6;
+      color: #333;
+      max-width: 650px;
+      margin: 0 auto;
+    }
+
+    .cert-grant-tag {
+      font-size: 1.05rem;
+      color: #0d3822;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+
+    .cert-footer-grid {
+      display: flex;
+      justify-content: space-around;
+      align-items: flex-end;
+      margin-top: 20px;
+      font-size: 1rem;
+      color: #444;
+    }
+    .cert-footer-item {
+      text-align: center;
+    }
+    .cert-line-space {
+      width: 160px;
+      border-bottom: 1px solid #777;
+      margin-top: 6px;
+      font-weight: bold;
+      color: #0d3822;
+    }
+
+    /* Print Controls */
+    .cert-modal-btns {
+      position: absolute;
+      top: 25px;
+      right: 25px;
+      display: flex;
+      gap: 10px;
+      z-index: 1100;
+    }
+    .btn-cert-control {
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      font-size: 0.95rem;
+    }
+    .btn-print { background: #28a745; color: #fff; }
+    .btn-close { background: #dc3545; color: #fff; }
+
+    @media print {
+      body * { visibility: hidden; }
+      .certificate-modal, .certificate-modal * { visibility: visible; }
+      .certificate-modal {
+        position: absolute;
+        left: 0; top: 0;
+        width: 100%; height: 100%;
+        background: none;
+        padding: 0;
+      }
+      .cert-modal-btns { display: none; }
+      .certificate-container {
+        box-shadow: none;
+        page-break-inside: avoid;
+        border: 8px solid #0d3822;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+    <!-- 1. START SCREEN -->
+    <div id="start-screen" class="screen active">
+      <div class="hero-banner">
+        <h1 class="hero-title">🌟 Math Champions League 🌟</h1>
+        <p class="hero-subtitle">Primary 3 - First Term Interactive Assessment</p>
+      </div>
+
+      <!-- تم تعديل النموذج ليقبل الحدث بشكل سليم على كل الهواتف -->
+      <div id="setup-form">
+        <div class="form-group">
+          <label for="student-name">👤 Student Full Name:</label>
+          <input type="text" id="student-name" class="form-control" placeholder="e.g. Anas Mohamed">
+        </div>
+
+        <div class="form-group">
+          <label for="school-name">🏫 School Name:</label>
+          <input type="text" id="school-name" class="form-control" placeholder="e.g. Manaret Heliopolis School">
+        </div>
+
+        <div class="form-group">
+          <label for="chapter-select">📚 Select Chapter (25 Questions):</label>
+          <select id="chapter-select" class="form-control">
+            <option value="1">Chapter 1: Rules of Multiplication</option>
+            <option value="2">Chapter 2: Time and Duration</option>
+            <option value="3">Chapter 3: Division</option>
+            <option value="4">Chapter 4: Addition and Subtraction</option>
+            <option value="5">Chapter 5: Length & Distances</option>
+            <option value="6">Chapter 6: Organizing Data & Graphs</option>
+            <option value="7">Chapter 7: Mental Math Strategies</option>
+            <option value="8">Chapter 8: Division with Remainders</option>
+            <option value="9">Chapter 9: Numbers Bigger than 10,000</option>
+            <option value="10">Chapter 10: Vertical Multiplication</option>
+          </select>
+        </div>
+
+        <button type="button" class="btn-start" onclick="startQuiz()">🚀 Start the Quiz Challenge!</button>
+      </div>
+
+      <!-- Global Live Top 20 Leaderboard -->
+      <div class="leaderboard-section">
+        <div class="leaderboard-title">
+          <span>🏆 Top 20 Global Achievers (Live)</span>
+          <span style="font-size: 0.8rem; color: #666;">Rankings</span>
+        </div>
+        <ul class="leaderboard-list" id="leaderboard-list">
+          <li class="leaderboard-item" style="color: #888; justify-content: center;">Connecting to live scores...</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 2. QUIZ SCREEN -->
+    <div id="quiz-screen" class="screen">
+      <div class="quiz-header">
+        <div>
+          <div id="display-student" class="info-badge">Student: -</div>
+          <div id="display-chapter" class="info-badge" style="color: #666; font-size: 0.85rem;">Chapter: 1</div>
+        </div>
+        <div class="timer-box" id="timer-box">
+          ⏱️ <span id="time-left">30</span>s
+        </div>
+      </div>
+
+      <div class="timer-track-wrapper">
+        <div class="progress-bar-container">
+          <div class="progress-bar" id="timer-progress-bar"></div>
+        </div>
+      </div>
+
+      <div class="question-card">
+        <div class="question-info-row">
+          <span class="question-counter-badge" id="q-counter-badge">Question 1 of 25</span>
+          <span style="font-size: 0.85rem; color: #666; font-weight: 600;">Math Championship</span>
+        </div>
+        
+        <div class="question-title" id="question-text">
+          Loading question text...
+        </div>
+
+        <div class="options-grid" id="options-container"></div>
+      </div>
+    </div>
+
+    <!-- 3. RESULTS SCREEN -->
+    <div id="results-screen" class="screen">
+      <div class="results-card">
+        <h2 style="font-family: 'Fredoka One'; color: var(--primary-dark); font-size: 2rem;">🎉 Quiz Completed!</h2>
+        <p style="color: #666; font-weight: 600; margin-top: 5px;">Great effort on finishing the chapter challenge!</p>
+
+        <div class="score-circle">
+          <span class="score-number" id="final-score">0</span>
+          <span class="score-total">out of 25</span>
+        </div>
+
+        <p id="feedback-message" style="font-size: 1.2rem; font-weight: 700; color: var(--primary-dark);"></p>
+
+        <div class="action-btns">
+          <button class="btn-action btn-certificate" onclick="showCertificate()">📜 View & Print Excellence Certificate</button>
+          <button class="btn-action btn-retry" onclick="restartApp()">🔄 Try Another Chapter</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. OFFICIAL ENGLISH CERTIFICATE MODAL -->
+  <div class="certificate-modal" id="certificate-modal">
+    <div class="cert-modal-btns">
+      <button class="btn-cert-control btn-print" onclick="window.print()">🖨️ Print Certificate</button>
+      <button class="btn-cert-control btn-close" onclick="closeCertificate()">❌ Close</button>
+    </div>
+
+    <div class="certificate-container" id="certificate-print-area">
+      <div class="cert-body">
+        <div>
+          <h1 class="cert-header-title">Certificate of Appreciation</h1>
+          <div class="cert-title-divider"></div>
+        </div>
+
+        <div>
+          <p class="cert-given-to">This Certificate is Proudly Awarded To:</p>
+          <div class="cert-student-name" id="cert-student-name">Anas Mohamed</div>
+        </div>
+
+        <div>
+          <p class="cert-message">
+            In recognition of your outstanding performance, dedication, and excellent mathematical skills in the Primary 3 Math Championship.
+          </p>
+          <p class="cert-grant-tag">Awarded with High Honor & Best Wishes</p>
+        </div>
+
+        <div class="cert-footer-grid">
+          <div class="cert-footer-item">
+            <span>Date</span>
+            <div class="cert-line-space" id="cert-date">2026 / 10 / 26</div>
+          </div>
+          <div class="cert-footer-item">
+            <span>Signature</span>
+            <div class="cert-line-space" id="cert-school-disp">School Administration</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* 1. Firebase Live Realtime Database Setup */
+    const firebaseConfig = {
+      databaseURL: "https://grade3-math-championship-default-rtdb.firebaseio.com/",
+      projectId: "grade3-math-championship"
+    };
+
+    let dbRef = null;
+    try {
+      if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+      }
+      dbRef = firebase.database().ref("math_top20_scores");
+    } catch(e) {
+      console.log("Firebase initialized in fallback mode:", e);
+    }
+
+    /* Realtime Listener for Global Top 20 Scores */
+    function listenToGlobalLeaderboard() {
+      if (!dbRef) {
+        renderFallbackLeaderboard();
+        return;
+      }
+
+      dbRef.orderByChild("score").limitToLast(20).on("value", (snapshot) => {
+        const data = snapshot.val();
+        const listContainer = document.getElementById('leaderboard-list');
+        listContainer.innerHTML = '';
+
+        if (!data) {
+          listContainer.innerHTML = `<li class="leaderboard-item" style="color: #888; justify-content: center;">No global records yet. Be the first!</li>`;
+          return;
+        }
+
+        const items = [];
+        Object.keys(data).forEach(key => {
+          items.push(data[key]);
+        });
+
+        items.sort((a, b) => b.score - a.score);
+
+        items.forEach((item, idx) => {
+          const li = document.createElement('li');
+          li.className = 'leaderboard-item';
+          li.innerHTML = `
+            <div>
+              <span>#${idx+1} ${item.name} <small>(Ch.${item.chapter})</small></span>
+              <span class="school-tag">🏫 ${item.school || 'School Admin'}</span>
+            </div>
+            <span style="color: var(--accent-orange); font-weight:700;">${item.score}/25</span>
+          `;
+          listContainer.appendChild(li);
+        });
+      }, (err) => {
+        renderFallbackLeaderboard();
+      });
+    }
+
+    function saveScoreToFirebase(name, school, score, chapter) {
+      if (dbRef) {
+        dbRef.push({
+          name: name,
+          school: school,
+          score: score,
+          chapter: chapter,
+          timestamp: Date.now()
+        });
+      } else {
+        saveLocalFallback(name, school, score, chapter);
+      }
+    }
+
+    function saveLocalFallback(name, school, score, chapter) {
+      let list = JSON.parse(localStorage.getItem('math_top20_local') || "[]");
+      list.push({ name, school, score, chapter });
+      list.sort((a, b) => b.score - a.score);
+      list = list.slice(0, 20);
+      localStorage.setItem('math_top20_local', JSON.stringify(list));
+      renderFallbackLeaderboard();
+    }
+
+    function renderFallbackLeaderboard() {
+      const listContainer = document.getElementById('leaderboard-list');
+      let list = JSON.parse(localStorage.getItem('math_top20_local') || "[]");
+      if (list.length === 0) {
+        listContainer.innerHTML = `<li class="leaderboard-item" style="color: #888; justify-content: center;">No records yet. Be the first!</li>`;
+        return;
+      }
+      listContainer.innerHTML = '';
+      list.forEach((item, idx) => {
+        const li = document.createElement('li');
+        li.className = 'leaderboard-item';
+        li.innerHTML = `
+          <div>
+            <span>#${idx+1} ${item.name} <small>(Ch.${item.chapter})</small></span>
+            <span class="school-tag">🏫 ${item.school || 'School Admin'}</span>
+          </div>
+          <span style="color: var(--accent-orange); font-weight:700;">${item.score}/25</span>
+        `;
+        listContainer.appendChild(li);
+      });
+    }
+
+    /* Audio Sound Engine using Web Audio API */
+    class SoundEngine {
+      constructor() {
+        this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+
+      playTone(freq, type, duration, delay = 0) {
+        setTimeout(() => {
+          try {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+            gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start();
+            osc.stop(this.ctx.currentTime + duration);
+          } catch(e){}
+        }, delay * 1000);
+      }
+
+      playCorrect() {
+        this.playTone(523.25, 'sine', 0.15, 0);
+        this.playTone(659.25, 'sine', 0.15, 0.1);
+        this.playTone(783.99, 'sine', 0.3, 0.2);
+      }
+
+      playWrong() {
+        this.playTone(220, 'sawtooth', 0.2, 0);
+        this.playTone(185, 'sawtooth', 0.3, 0.15);
+      }
+
+      playTick() {
+        this.playTone(800, 'triangle', 0.05, 0);
+      }
+
+      playFanfare() {
+        [523.25, 659.25, 783.99, 1046.50].forEach((freq, idx) => {
+          this.playTone(freq, 'triangle', 0.25, idx * 0.12);
+        });
+      }
+    }
+
+    const sound = new SoundEngine();
+
+    function speakEncouragement(text) {
+      if ('speechSynthesis' in window) {
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'en-US';
+        utterance.rate = 1.0;
+        window.speechSynthesis.speak(utterance);
+      }
+    }
+
+    const questionBank = {
+      1: [
+        { q: "5 × 8 is _____ more than 5 × 7.", options: ["5", "8", "7", "1"], answer: 0 },
+        { q: "4 × 5 = 4 × 6 - _____.", options: ["5", "6", "4", "1"], answer: 2 },
+        { q: "6 × 3 = _____ × 6.", options: ["3", "6", "18", "1"], answer: 0 },
+        { q: "9 × 5 = 5 × _____.", options: ["5", "9", "45", "10"], answer: 1 },
+        { q: "2 × 5 is _____ more than 2 × 4.", options: ["5", "2", "4", "10"], answer: 1 },
+        { q: "5 × 3 is _____ less than 5 × 4.", options: ["3", "4", "5", "1"], answer: 2 },
+        { q: "6 × 9 = 6 × 8 + _____.", options: ["6", "9", "8", "1"], answer: 0 },
+        { q: "9 × 7 = 9 × 8 - _____.", options: ["7", "8", "9", "1"], answer: 2 },
+        { q: "Break down 7 × 9 into (3 × 9) + (_____ × 9).", options: ["3", "4", "7", "9"], answer: 1 },
+        { q: "Break down 8 × 5 into (6 × 5) + (_____ × 5).", options: ["2", "3", "5", "8"], answer: 0 },
+        { q: "Break down 6 × 7 into (6 × 2) + (6 × _____).", options: ["5", "2", "7", "6"], answer: 0 },
+        { q: "10 × 7 = _____.", options: ["17", "70", "700", "7"], answer: 1 },
+        { q: "Any number multiplied by 0 equals _____.", options: ["1", "The same number", "0", "10"], answer: 2 },
+        { q: "15 × 0 = _____.", options: ["15", "0", "1", "150"], answer: 1 },
+        { q: "10 × 10 = _____.", options: ["20", "10", "100", "1000"], answer: 2 },
+        { q: "One box has 10 pencils. How many pencils are in 4 boxes?", options: ["14 pencils", "40 pencils", "400 pencils", "10 pencils"], answer: 1 },
+        { q: "In a game, 3 throws scored 10 points each, and 2 throws scored 0 points. Total score = _____.", options: ["30 points", "32 points", "5 points", "0 points"], answer: 0 },
+        { q: "8 × _____ = 40.", options: ["4", "5", "6", "8"], answer: 1 },
+        { q: "_____ × 4 = 16.", options: ["2", "4", "8", "12"], answer: 1 },
+        { q: "3 × _____ = 27.", options: ["7", "8", "9", "3"], answer: 2 },
+        { q: "_____ × 7 = 42.", options: ["5", "6", "7", "8"], answer: 1 },
+        { q: "10 × _____ = 50.", options: ["5", "10", "50", "0"], answer: 0 },
+        { q: "2 × _____ = 0.", options: ["0", "1", "2", "10"], answer: 0 },
+        { q: "8 × _____ = 48.", options: ["5", "6", "7", "8"], answer: 1 },
+        { q: "_____ × 10 = 40.", options: ["4", "10", "40", "0"], answer: 0 }
+      ],
+      2: [
+        { q: "What time will it be 55 minutes after 3:10?", options: ["3:55", "4:05", "4:10", "3:65"], answer: 1 },
+        { q: "What time was it 45 minutes before 8:15?", options: ["7:30", "7:45", "8:00", "7:15"], answer: 0 },
+        { q: "What time was it 30 minutes before 6:20?", options: ["5:50", "5:30", "6:50", "6:10"], answer: 0 },
+        { q: "What time will it be 25 minutes after 8:45?", options: ["9:00", "9:10", "9:15", "8:70"], answer: 1 },
+        { q: "1 hour = _____ minutes.", options: ["30", "60", "100", "12"], answer: 1 },
+        { q: "Find the elapsed time from 3:50 PM to 4:15 PM.", options: ["15 mins", "25 mins", "35 mins", "1 hour"], answer: 1 },
+        { q: "Find the elapsed time from 7:20 AM to 8:35 AM.", options: ["1 hour 15 mins", "1 hour 35 mins", "55 mins", "1 hour 20 mins"], answer: 0 },
+        { q: "1 hour 20 minutes = _____ minutes.", options: ["120 mins", "80 mins", "70 mins", "100 mins"], answer: 1 },
+        { q: "105 minutes = _____ hour(s) _____ minutes.", options: ["1 hour 45 mins", "1 hour 05 mins", "2 hours 5 mins", "1 hour 30 mins"], answer: 0 },
+        { q: "1 minute = _____ seconds.", options: ["10", "60", "100", "12"], answer: 1 },
+        { q: "1 minute 5 seconds = _____ seconds.", options: ["15 secs", "65 secs", "105 secs", "50 secs"], answer: 1 },
+        { q: "90 seconds = _____ min _____ secs.", options: ["1 min 30 secs", "1 min 10 secs", "2 mins", "1 min 40 secs"], answer: 0 },
+        { q: "Which unit is best to measure a 50m sprint?", options: ["Hours", "Minutes", "Seconds", "Days"], answer: 2 },
+        { q: "Which unit is best to measure sleep duration in a day?", options: ["Seconds", "Minutes", "Hours", "Kilometers"], answer: 2 },
+        { q: "Saly studied from 7:30 PM to 8:15 PM. How many minutes did she study?", options: ["30 mins", "45 mins", "60 mins", "15 mins"], answer: 1 },
+        { q: "Gamal read for 45 mins in morning and 20 mins in afternoon. Total time?", options: ["65 mins (1 hr 5 mins)", "1 hr 15 mins", "50 mins", "2 hours"], answer: 0 },
+        { q: "What time was it 20 minutes before 4:05?", options: ["3:45", "3:50", "4:25", "3:40"], answer: 0 },
+        { q: "1 hour 35 minutes = _____ minutes.", options: ["95 mins", "135 mins", "85 mins", "75 mins"], answer: 0 },
+        { q: "115 seconds = _____ min _____ secs.", options: ["1 min 55 secs", "1 min 15 secs", "2 mins 15 secs", "1 min 45 secs"], answer: 0 },
+        { q: "A stopwatch shows 00:00:45:00. This represents _____.", options: ["45 hours", "45 minutes", "45 seconds", "45 milliseconds"], answer: 2 },
+        { q: "You walked for 40 minutes and arrived at 5:20. What time did you leave home?", options: ["4:40", "4:20", "5:00", "4:50"], answer: 0 },
+        { q: "The time from 10:50 AM to 11:55 AM is _____.", options: ["1 hour 5 mins", "1 hour 15 mins", "55 mins", "1 hour 10 mins"], answer: 0 },
+        { q: "1 minute 40 seconds = _____ seconds.", options: ["140 secs", "100 secs", "110 secs", "80 secs"], answer: 1 },
+        { q: "How many seconds are in 2 minutes?", options: ["120 secs", "200 secs", "60 secs", "100 secs"], answer: 0 },
+        { q: "You rode the bus for 50 mins and train for 30 mins. Total duration?", options: ["1 hour 20 mins", "1 hour 10 mins", "80 hours", "2 hours"], answer: 0 }
+      ],
+      3: [
+        { q: "Share 12 cookies equally among 3 people. How many cookies each?", options: ["3", "4", "6", "36"], answer: 1 },
+        { q: "In 12 ÷ 3 = 4, the number 12 is called the _____.", options: ["Dividend", "Divisor", "Quotient", "Remainder"], answer: 0 },
+        { q: "In 12 ÷ 3 = 4, the number 3 is called the _____.", options: ["Dividend", "Divisor", "Quotient", "Total"], answer: 1 },
+        { q: "15 ÷ 5 = _____.", options: ["3", "5", "10", "20"], answer: 0 },
+        { q: "36 ÷ 4 = _____.", options: ["8", "9", "6", "12"], answer: 1 },
+        { q: "28 ÷ 7 = _____.", options: ["3", "4", "5", "6"], answer: 1 },
+        { q: "0 ÷ 2 = _____.", options: ["2", "0", "1", "Undefined"], answer: 1 },
+        { q: "8 ÷ 8 = _____.", options: ["8", "0", "1", "16"], answer: 2 },
+        { q: "5 ÷ 1 = _____.", options: ["1", "5", "0", "10"], answer: 1 },
+        { q: "If you give 2 pencils to each person from a total of 14, how many people share?", options: ["7 people", "12 people", "28 people", "6 people"], answer: 0 },
+        { q: "Cut a 63 cm ribbon into 7 equal pieces. How long is each piece?", options: ["7 cm", "8 cm", "9 cm", "56 cm"], answer: 2 },
+        { q: "Make bouquets with 72 flowers, placing 9 flowers in each. How many bouquets?", options: ["7 bouquets", "8 bouquets", "9 bouquets", "81 bouquets"], answer: 1 },
+        { q: "Which word problem represents 6 ÷ 3?", options: ["6 apples divided equally among 3 people", "6 people on bus, 3 got off", "6 mandarins plus 3 more", "6 sheets to 3 people each"], answer: 0 },
+        { q: "A 15 cm ribbon is how many times as long as a 3 cm ribbon?", options: ["3 times", "5 times", "12 times", "45 times"], answer: 1 },
+        { q: "Reem has 24 blocks. Sami has 6 blocks. Reem has _____ times as many blocks as Sami.", options: ["4 times", "18 times", "30 times", "3 times"], answer: 0 },
+        { q: "Gamal is 8 years old, grandmother is 64. Grandmother is _____ times as old.", options: ["7 times", "8 times", "56 times", "9 times"], answer: 1 },
+        { q: "32 ÷ 4 = _____.", options: ["6", "7", "8", "9"], answer: 2 },
+        { q: "49 ÷ 7 = _____.", options: ["6", "7", "8", "9"], answer: 1 },
+        { q: "48 ÷ 6 = _____.", options: ["7", "8", "9", "6"], answer: 1 },
+        { q: "0 ÷ 9 = _____.", options: ["9", "1", "0", "90"], answer: 2 },
+        { q: "Put 24 marbles into bags with 6 in each bag. How many bags?", options: ["4 bags", "18 bags", "30 bags", "5 bags"], answer: 0 },
+        { q: "Cut 64 cm ribbon into 8 equal pieces. Each piece = _____.", options: ["6 cm", "7 cm", "8 cm", "9 cm"], answer: 2 },
+        { q: "36 ÷ 6 = _____.", options: ["5", "6", "7", "8"], answer: 1 },
+        { q: "72 ÷ 9 = _____.", options: ["7", "8", "9", "10"], answer: 1 },
+        { q: "There are 32 puddings and 8 jellies. Puddings are _____ times as many as jellies.", options: ["3 times", "4 times", "24 times", "5 times"], answer: 1 }
+      ],
+      4: [
+        { q: "375 + 283 = _____.", options: ["658", "558", "648", "668"], answer: 0 },
+        { q: "102 + 79 = _____.", options: ["171", "181", "191", "182"], answer: 1 },
+        { q: "407 + 834 = _____.", options: ["1231", "1241", "1141", "1251"], answer: 1 },
+        { q: "5,423 + 4,378 = _____.", options: ["9,801", "9,701", "9,811", "9,791"], answer: 0 },
+        { q: "514 - 182 = _____.", options: ["332", "322", "432", "342"], answer: 0 },
+        { q: "830 - 125 = _____.", options: ["705", "715", "605", "725"], answer: 0 },
+        { q: "315 - 194 = _____.", options: ["121", "111", "131", "221"], answer: 0 },
+        { q: "6,135 - 4,987 = _____.", options: ["1,148", "1,248", "1,158", "2,148"], answer: 0 },
+        { q: "503 - 185 = _____.", options: ["318", "328", "418", "308"], answer: 0 },
+        { q: "703 - 6 = _____.", options: ["697", "693", "703", "687"], answer: 0 },
+        { q: "402 - 275 = _____.", options: ["127", "137", "227", "117"], answer: 0 },
+        { q: "1,000 - 464 = _____.", options: ["536", "546", "636", "436"], answer: 0 },
+        { q: "Buy shoes for 246 EGP and bag for 485 EGP. Total cost?", options: ["731 EGP", "721 EGP", "631 EGP", "831 EGP"], answer: 0 },
+        { q: "There are 243 cows and 187 horses. How many more cows than horses?", options: ["56 cows", "66 cows", "46 cows", "156 cows"], answer: 0 },
+        { q: "You have 1,000 EGP. Bought backpack for 520 EGP. Money left?", options: ["480 EGP", "580 EGP", "420 EGP", "380 EGP"], answer: 0 },
+        { q: "3,685 + 4,973 = _____.", options: ["8,658", "8,648", "8,558", "7,658"], answer: 0 },
+        { q: "5,665 - 3,848 = _____.", options: ["1,817", "1,717", "1,827", "2,817"], answer: 0 },
+        { q: "7,001 - 624 = _____.", options: ["6,377", "6,477", "6,387", "6,277"], answer: 0 },
+        { q: "305 - 8 = _____.", options: ["297", "298", "303", "293"], answer: 0 },
+        { q: "1,000 - 217 = _____.", options: ["783", "793", "683", "883"], answer: 0 },
+        { q: "Meal costs 124 EGP, paid with 200 EGP. Change?", options: ["76 EGP", "86 EGP", "66 EGP", "176 EGP"], answer: 0 },
+        { q: "Book has 325 pages, read 141 pages. Pages left?", options: ["184 pages", "194 pages", "174 pages", "284 pages"], answer: 0 },
+        { q: "425 + 149 = _____.", options: ["574", "564", "584", "474"], answer: 0 },
+        { q: "1,000 - 347 = _____.", options: ["653", "643", "753", "553"], answer: 0 },
+        { q: "Bought books for 805 EGP, paid 1,000 EGP. Change?", options: ["195 EGP", "205 EGP", "185 EGP", "295 EGP"], answer: 0 }
+      ],
+      5: [
+        { q: "1 kilometer (km) = _____ meters (m).", options: ["100 m", "1,000 m", "10 m", "10,000 m"], answer: 1 },
+        { q: "1 km 50 m = _____ m.", options: ["150 m", "1,050 m", "1,500 m", "105 m"], answer: 1 },
+        { q: "1,230 m = _____ km _____ m.", options: ["1 km 230 m", "12 km 30 m", "10 km 230 m", "1 km 23 m"], answer: 0 },
+        { q: "2 km = _____ m.", options: ["200 m", "2,000 m", "20,000 m", "20 m"], answer: 1 },
+        { q: "1 km 370 m = _____ m.", options: ["1,370 m", "137 m", "13,700 m", "370 m"], answer: 0 },
+        { q: "3,760 m = _____ km _____ m.", options: ["3 km 760 m", "37 km 60 m", "30 km 760 m", "3 km 76 m"], answer: 0 },
+        { q: "Distance measured in a straight line between two points is called _____.", options: ["Distance", "Shortest distance", "Route", "Width"], answer: 1 },
+        { q: "Distance along a winding path is called _____.", options: ["Distance", "Shortest distance", "Height", "Thickness"], answer: 0 },
+        { q: "Best unit to measure classroom width:", options: ["mm", "cm", "m", "km"], answer: 2 },
+        { q: "Best unit to measure thickness of a math notebook:", options: ["mm", "cm", "m", "km"], answer: 0 },
+        { q: "Best unit to measure distance between two cities:", options: ["mm", "cm", "m", "km"], answer: 3 },
+        { q: "Path from Park to Store is 700m + 970m = 1670m. In km & m?", options: ["1 km 670 m", "16 km 70 m", "10 km 670 m", "1 km 67 m"], answer: 0 },
+        { q: "If Distance is 1,670 m and Shortest distance is 1,200 m, difference?", options: ["470 m", "2,870 m", "370 m", "570 m"], answer: 0 },
+        { q: "4 km = _____ m.", options: ["400 m", "4,000 m", "40,000 m", "40 m"], answer: 1 },
+        { q: "1,050 m = _____ km _____ m.", options: ["1 km 50 m", "10 km 50 m", "1 km 500 m", "15 km"], answer: 0 },
+        { q: "2,450 m = _____ km _____ m.", options: ["2 km 450 m", "24 km 50 m", "2 km 45 m", "20 km 450 m"], answer: 0 },
+        { q: "Height of a student desk is best measured in _____.", options: ["mm", "cm", "m", "km"], answer: 1 },
+        { q: "Marathon race length is best measured in _____.", options: ["mm", "cm", "m", "km"], answer: 3 },
+        { q: "1,080 m = _____ km _____ m.", options: ["1 km 80 m", "10 km 80 m", "1 km 800 m", "18 km"], answer: 0 },
+        { q: "Path A is 730 m, Path B is 470 m. Total distance?", options: ["1,200 m (1 km 200 m)", "1,100 m", "1,300 m", "260 m"], answer: 0 },
+        { q: "Distance is 1,200 m and Shortest distance is 960 m. Difference?", options: ["240 m", "340 m", "140 m", "2,160 m"], answer: 0 },
+        { q: "8 km = _____ m.", options: ["800 m", "8,000 m", "80,000 m", "80 m"], answer: 1 },
+        { q: "1 km 80 m = _____ m.", options: ["1,080 m", "1,800 m", "180 m", "10,080 m"], answer: 0 },
+        { q: "Thickness of a coin is best measured in _____.", options: ["mm", "cm", "m", "km"], answer: 0 },
+        { q: "Swimming pool length is best measured in _____.", options: ["mm", "cm", "m", "km"], answer: 2 }
+      ],
+      6: [
+        { q: "Tally marks group vertical lines into sets of _____.", options: ["3", "4", "5", "10"], answer: 2 },
+        { q: "Tally symbol '卌 I' represents which number?", options: ["5", "6", "7", "10"], answer: 1 },
+        { q: "Tally symbol '卌 卌' represents which number?", options: ["5", "8", "10", "12"], answer: 2 },
+        { q: "In a bar graph, scale marks equal 2 units. 4 scale marks high =", options: ["4", "6", "8", "10"], answer: 2 },
+        { q: "In a bar graph, lowest scale mark must start at _____.", options: ["0", "1", "5", "10"], answer: 0 },
+        { q: "Tally '卌 卌 III' represents _____.", options: ["13", "12", "15", "8"], answer: 0 },
+        { q: "If Math=11, English=6, PE=13, Other=5, total students =", options: ["30", "35", "40", "25"], answer: 1 },
+        { q: "Which subject is most popular if PE bar is highest?", options: ["Math", "English", "P.E.", "Other"], answer: 2 },
+        { q: "Bar graph scale interval is 5. Height at 3rd mark above 0 =", options: ["5", "10", "15", "20"], answer: 2 },
+        { q: "In double entry table, total is found by adding _____.", options: ["Only vertically", "Only horizontally", "Vertically or horizontally", "By multiplying"], answer: 2 },
+        { q: "Class 1=25, Class 2=25, Class 3=26. Total Grade 3 students =", options: ["76", "75", "80", "66"], answer: 0 },
+        { q: "If 12 borrowed Picture books and 4 borrowed Science books, difference =", options: ["16", "8", "6", "4"], answer: 1 },
+        { q: "10 scale intervals represent 100 cans. 1 scale interval =", options: ["5 cans", "10 cans", "20 cans", "50 cans"], answer: 1 },
+        { q: "If Class 1 collected 90 cans and Class 3 collected 40 cans, how many more?", options: ["50 cans", "130 cans", "40 cans", "60 cans"], answer: 0 },
+        { q: "Tally '卌 卌 卌 I' represents _____.", options: ["15", "16", "17", "11"], answer: 1 },
+        { q: "First step in drawing a bar graph:", options: ["Draw bars", "Write title & units", "Color bars", "Count totals"], answer: 1 },
+        { q: "If Boys=53 and Girls=50 in Grade 3, total Grade 3 students =", options: ["103", "100", "93", "113"], answer: 0 },
+        { q: "Grade 3 Boys in Class 1=18, Class 2=18, Class 3=17. Total Boys =", options: ["53", "50", "55", "43"], answer: 0 },
+        { q: "Bar graph shows 18 cuts and 8 bruises. How many more cuts?", options: ["10", "26", "8", "12"], answer: 0 },
+        { q: "Tally 'IIII' represents _____.", options: ["3", "4", "5", "6"], answer: 1 },
+        { q: "If 8 students like Cake and 5 like Donut, total =", options: ["13", "3", "40", "12"], answer: 0 },
+        { q: "If 14 like Dog, 12 like Cat, 6 like Dolphin, total surveyed =", options: ["32", "30", "34", "28"], answer: 0 },
+        { q: "Injury cause: Bumping=29, Falling=20, Twisting=12. Total injuries =", options: ["61", "51", "60", "41"], answer: 0 },
+        { q: "If 10 injured in Gym in April, 16 in May, 9 in June. Total Gym =", options: ["35", "26", "30", "40"], answer: 0 },
+        { q: "Title of a graph tells us _____.", options: ["Who drew it", "What data is presented", "How many bars", "Scale value"], answer: 1 }
+      ],
+      7: [
+        { q: "Mental Math: 33 + 46 = _____.", options: ["79", "69", "89", "78"], answer: 0 },
+        { q: "Mental Math: 24 + 30 = _____.", options: ["54", "44", "64", "50"], answer: 0 },
+        { q: "Mental Math: 37 + 8 = _____.", options: ["45", "43", "55", "46"], answer: 0 },
+        { q: "Mental Math: 51 + 46 = _____.", options: ["97", "87", "96", "98"], answer: 0 },
+        { q: "Mental Math: 45 + 38 = _____.", options: ["83", "73", "85", "82"], answer: 0 },
+        { q: "Mental Math: 62 - 39 = _____.", options: ["23", "33", "25", "21"], answer: 0 },
+        { q: "Mental Math: 100 - 42 = _____.", options: ["58", "68", "52", "48"], answer: 0 },
+        { q: "Mental Math: 54 - 20 = _____.", options: ["34", "24", "44", "30"], answer: 0 },
+        { q: "Mental Math: 37 - 8 = _____.", options: ["29", "28", "31", "19"], answer: 0 },
+        { q: "Mental Math: 51 - 26 = _____.", options: ["25", "35", "24", "26"], answer: 0 },
+        { q: "Mental Math: 100 - 38 = _____.", options: ["62", "72", "58", "68"], answer: 0 },
+        { q: "Mental Math: 13 + 20 = _____.", options: ["33", "23", "43", "30"], answer: 0 },
+        { q: "Mental Math: 66 + 3 = _____.", options: ["69", "79", "68", "63"], answer: 0 },
+        { q: "Mental Math: 34 + 32 = _____.", options: ["66", "76", "64", "68"], answer: 0 },
+        { q: "Mental Math: 27 + 13 = _____.", options: ["40", "30", "50", "39"], answer: 0 },
+        { q: "Mental Math: 17 + 59 = _____.", options: ["76", "66", "86", "77"], answer: 0 },
+        { q: "Mental Math: 83 - 20 = _____.", options: ["63", "53", "73", "60"], answer: 0 },
+        { q: "Mental Math: 84 - 32 = _____.", options: ["52", "62", "42", "54"], answer: 0 },
+        { q: "Mental Math: 100 - 59 = _____.", options: ["41", "51", "39", "49"], answer: 0 },
+        { q: "Mental Math: 100 - 86 = _____.", options: ["14", "24", "16", "26"], answer: 0 },
+        { q: "Mental Math: 48 + 7 = _____.", options: ["55", "45", "56", "54"], answer: 0 },
+        { q: "Mental Math: 24 + 71 = _____.", options: ["95", "85", "96", "94"], answer: 0 },
+        { q: "Mental Math: 61 - 17 = _____.", options: ["44", "54", "43", "45"], answer: 0 },
+        { q: "Mental Math: 100 - 71 = _____.", options: ["29", "39", "21", "31"], answer: 0 },
+        { q: "Mental Math strategy for 33 + 40 + 6: First add tens (33+40=73), then ones (73+6=_____).", options: ["79", "80", "78", "76"], answer: 0 }
+      ],
+      8: [
+        { q: "17 ÷ 3 = _____ remainder _____.", options: ["5 R 2", "5 R 1", "4 R 5", "6 R 1"], answer: 0 },
+        { q: "In division, remainder must always be _____ than the Divisor.", options: ["Smaller", "Bigger", "Equal", "Double"], answer: 0 },
+        { q: "7 ÷ 2 = _____.", options: ["3 R 1", "3 R 2", "2 R 3", "4 R 0"], answer: 0 },
+        { q: "60 ÷ 8 = _____.", options: ["7 R 4", "7 R 2", "8 R 4", "6 R 12"], answer: 0 },
+        { q: "Check answer for 14 ÷ 4 = 3 R 2 using formula: (Divisor × Quotient) + Remainder =", options: ["(4 × 3) + 2 = 14", "(4 + 3) × 2 = 14", "4 × 3 = 12", "14 - 2 = 12"], answer: 0 },
+        { q: "Is 28 ÷ 3 = 8 R 4 correct?", options: ["No, remainder 4 > divisor 3 (Correct is 9 R 1)", "Yes, it is correct", "No, answer is 8 R 1", "No, answer is 10"], answer: 0 },
+        { q: "Is 43 ÷ 5 = 8 R 3 correct?", options: ["Yes ✓", "No, wrong quotient", "No, wrong remainder", "No, cannot divide"], answer: 0 },
+        { q: "37 candies shared equally among 5 people. How many each & left over?", options: ["7 each, 2 left over", "7 each, 1 left over", "6 each, 7 left over", "8 each, 0 left over"], answer: 0 },
+        { q: "25 sheets paper shared among 7 people. How many each & left over?", options: ["3 each, 4 left over", "3 each, 1 left over", "4 each, 3 left over", "2 each, 11 left over"], answer: 0 },
+        { q: "22 cookies, 6 on each plate. How many plates needed for ALL cookies?", options: ["4 plates (3 full + 1 for remaining 4)", "3 plates", "5 plates", "2 plates"], answer: 0 },
+        { q: "32 balls, 6 per box. How many FULL boxes of 6 balls?", options: ["5 boxes", "6 boxes", "4 boxes", "5.3 boxes"], answer: 0 },
+        { q: "43 children, 5 per bench. How many benches needed for EVERYONE?", options: ["9 benches", "8 benches", "10 benches", "7 benches"], answer: 0 },
+        { q: "Book has 50 pages, read 8 pages/day. Days to FINISH entire book?", options: ["7 days", "6 days", "5 days", "8 days"], answer: 0 },
+        { q: "38 tires, 4 tires per toy car. How many cars can you build?", options: ["9 cars", "10 cars", "8 cars", "9.5 cars"], answer: 0 },
+        { q: "26 cm shelf space, 3 cm picture books. How many books fit?", options: ["8 books", "9 books", "7 books", "10 books"], answer: 0 },
+        { q: "15 ÷ 2 = _____.", options: ["7 R 1", "6 R 3", "7 R 2", "8 R 0"], answer: 0 },
+        { q: "53 ÷ 6 = _____.", options: ["8 R 5", "8 R 3", "9 R 1", "7 R 11"], answer: 0 },
+        { q: "62 ÷ 9 = _____.", options: ["6 R 8", "7 R 1", "6 R 2", "7 R 8"], answer: 0 },
+        { q: "26 ÷ 8 = _____.", options: ["3 R 2", "3 R 4", "2 R 10", "4 R 0"], answer: 0 },
+        { q: "51 ÷ 7 = _____.", options: ["7 R 2", "7 R 3", "8 R 1", "6 R 9"], answer: 0 },
+        { q: "44 books, carry 7 per trip. How many trips to carry ALL?", options: ["7 trips", "6 trips", "8 trips", "5 trips"], answer: 0 },
+        { q: "50 children, 6 per cart. Carts needed for ALL children?", options: ["9 carts", "8 carts", "10 carts", "7 carts"], answer: 0 },
+        { q: "34 cans, 4 per box. How many FULL boxes of 4 cans?", options: ["8 boxes", "9 boxes", "7 boxes", "10 boxes"], answer: 0 },
+        { q: "38 cm shelf height, stack 7 cm boxes. How many boxes fit?", options: ["5 boxes", "6 boxes", "4 boxes", "7 boxes"], answer: 0 },
+        { q: "13 ÷ 5 = _____.", options: ["2 R 3", "2 R 1", "3 R 2", "2 R 5"], answer: 0 }
+      ],
+      9: [
+        { q: "Ten 1,000s make _____.", options: ["10,000", "1,000", "100,000", "1,000,000"], answer: 0 },
+        { q: "Ten 10,000s make _____.", options: ["100,000", "10,000", "1,000,000", "100"], answer: 0 },
+        { q: "Write in digits: Eight Hundred Sixty-Five Thousand.", options: ["865,000", "86,500", "8,650,000", "800,650"], answer: 0 },
+        { q: "Write in digits: Five Hundred Ninety-Six Thousand and Eighty.", options: ["596,080", "596,800", "59,680", "509,680"], answer: 0 },
+        { q: "Four 100,000s, seven 10,000s, and two 1,000s make _____.", options: ["472,000", "47,200", "407,200", "4,720,000"], answer: 0 },
+        { q: "How many 1,000s make up 82,000?", options: ["82", "820", "8", "8200"], answer: 0 },
+        { q: "In 705,036, the digit in Ten Thousands place is _____.", options: ["0", "7", "5", "3"], answer: 0 },
+        { q: "In 705,036, the digit 7 is in the _____ place.", options: ["Hundred Thousands", "Ten Thousands", "Thousands", "Hundreds"], answer: 0 },
+        { q: "16,000 + 7,000 = _____.", options: ["23,000", "22,000", "13,000", "230,000"], answer: 0 },
+        { q: "200,000 - 180,000 = _____.", options: ["20,000", "200", "2,000", "180,000"], answer: 0 },
+        { q: "Compare: 180,000 _____ 18,000.", options: [">", "<", "=", "+"], answer: 0 },
+        { q: "Compare: 35,000 _____ 40,000.", options: ["<", ">", "=", "-"], answer: 0 },
+        { q: "Compare: 385,000 _____ 384,000.", options: [">", "<", "=", "x"], answer: 0 },
+        { q: "Compare: 500,000 _____ (700,000 - 200,000).", options: ["=", ">", "<", "+"], answer: 0 },
+        { q: "Multiply 72 by 10 =", options: ["720", "7,200", "72", "7,020"], answer: 0 },
+        { q: "Multiply 37 by 100 =", options: ["3,700", "370", "37,000", "307"], answer: 0 },
+        { q: "Divide 400 ÷ 10 =", options: ["40", "4", "4000", "10"], answer: 0 },
+        { q: "Divide 850 ÷ 10 =", options: ["85", "8500", "8.5", "850"], answer: 0 },
+        { q: "230 × 100 = _____.", options: ["23,000", "2,300", "230,000", "230"], answer: 0 },
+        { q: "7,000 ÷ 10 = _____.", options: ["700", "70", "7", "70,000"], answer: 0 },
+        { q: "Write in digits: Three Hundred Nine Thousand Eight Hundred Twenty.", options: ["309,820", "390,820", "309,280", "39,820"], answer: 0 },
+        { q: "In 426,703, the digit in Hundred Thousands place is _____.", options: ["4", "2", "6", "7"], answer: 0 },
+        { q: "80,000 + 140,000 = _____.", options: ["220,000", "210,000", "22,000", "2200"], answer: 0 },
+        { q: "700,000 - 260,000 = _____.", options: ["440,000", "460,000", "540,000", "44,000"], answer: 0 },
+        { q: "Compare: (3,000 + 7,000) _____ 10,000.", options: ["=", ">", "<", "x"], answer: 0 }
+      ],
+      10: [
+        { q: "20 × 4 = _____.", options: ["80", "800", "8", "24"], answer: 0 },
+        { q: "200 × 4 = _____.", options: ["800", "80", "8000", "204"], answer: 0 },
+        { q: "30 × 6 = _____.", options: ["180", "18", "1800", "36"], answer: 0 },
+        { q: "500 × 7 = _____.", options: ["3,500", "350", "35,000", "570"], answer: 0 },
+        { q: "Bought 4 balls costing 300 EGP each. Total cost?", options: ["1,200 EGP", "120 EGP", "700 EGP", "1,2000 EGP"], answer: 0 },
+        { q: "43 × 2 = _____.", options: ["86", "84", "68", "88"], answer: 0 },
+        { q: "75 × 4 = _____.", options: ["300", "280", "320", "290"], answer: 0 },
+        { q: "79 × 8 = _____.", options: ["632", "622", "642", "562"], answer: 0 },
+        { q: "In vertical multiplication of 26 × 3, 3 × 6 = 18. Write 8 and carry over _____.", options: ["1", "8", "3", "2"], answer: 0 },
+        { q: "148 × 2 = _____.", options: ["296", "286", "396", "298"], answer: 0 },
+        { q: "703 × 9 = _____.", options: ["6,327", "6,307", "6,227", "7,027"], answer: 0 },
+        { q: "387 × 6 = _____.", options: ["2,322", "2,222", "2,312", "1,822"], answer: 0 },
+        { q: "Calculate cleverly: 50 × 3 × 3 = 50 × (3 × 3) = 50 × 9 = _____.", options: ["450", "150", "300", "4500"], answer: 0 },
+        { q: "Calculate cleverly: 451 × 2 × 5 = 451 × (2 × 5) = 451 × 10 = _____.", options: ["4,510", "4,5100", "902", "2,255"], answer: 0 },
+        { q: "Calculate cleverly: 148 × 2 × 3 = 148 × 6 = _____.", options: ["888", "788", "898", "988"], answer: 0 },
+        { q: "5 buses, 43 people per bus. Total passengers?", options: ["215 people", "205 people", "225 people", "48 people"], answer: 0 },
+        { q: "Cake costs 138 EGP. 3 cakes per box. Buying 2 boxes costs: 138 × 3 × 2 =", options: ["828 EGP", "818 EGP", "414 EGP", "838 EGP"], answer: 0 },
+        { q: "80 × 3 = _____.", options: ["240", "2400", "24", "83"], answer: 0 },
+        { q: "900 × 7 = _____.", options: ["6,300", "630", "63,000", "907"], answer: 0 },
+        { q: "16 × 5 = _____.", options: ["80", "70", "90", "85"], answer: 0 },
+        { q: "84 × 9 = _____.", options: ["756", "746", "766", "726"], answer: 0 },
+        { q: "312 × 3 = _____.", options: ["936", "926", "946", "315"], answer: 0 },
+        { q: "468 × 2 = _____.", options: ["936", "836", "926", "946"], answer: 0 },
+        { q: "136 × 2 × 5 = 136 × 10 = _____.", options: ["1,360", "13,600", "272", "1,350"], answer: 0 },
+        { q: "Run around 139m pond 5 times. Total meters?", options: ["695 m", "595 m", "795 m", "685 m"], answer: 0 }
+      ]
+    };
+
+    let currentStudent = "";
+    let currentSchool = "";
+    let currentChapter = 1;
+    let currentQuestions = [];
+    let currentQIndex = 0;
+    let score = 0;
+    let timer = null;
+    let timeLeft = 30;
+    const TOTAL_TIME = 30;
+
+    const screens = {
+      start: document.getElementById('start-screen'),
+      quiz: document.getElementById('quiz-screen'),
+      results: document.getElementById('results-screen')
+    };
+
+    function showScreen(name) {
+      Object.keys(screens).forEach(key => {
+        screens[key].classList.remove('active');
+      });
+      screens[name].classList.add('active');
+    }
+
+    /* Start Quiz Handler معدل ليعمل بكفاءة على الآيفون والموبايل */
+    function startQuiz() {
+      const nameInput = document.getElementById('student-name');
+      const schoolInput = document.getElementById('school-name');
+      const chapterSelect = document.getElementById('chapter-select');
+
+      currentStudent = nameInput.value.trim();
+      currentSchool = schoolInput.value.trim();
+      
+      if (!currentStudent) {
+        alert("Please enter the student's name!");
+        nameInput.focus();
+        return;
+      }
+
+      currentChapter = parseInt(chapterSelect.value);
+      currentQuestions = [...questionBank[currentChapter]];
+      currentQIndex = 0;
+      score = 0;
+
+      document.getElementById('display-student').innerText = `Student: ${currentStudent}`;
+      document.getElementById('display-chapter').innerText = `Chapter ${currentChapter}: 25 Questions`;
+
+      showScreen('quiz');
+      try {
+        sound.playFanfare();
+      } catch(e){}
+      
+      speakEncouragement(`Welcome ${currentStudent}! Good luck in Chapter ${currentChapter}!`);
+      loadQuestion();
+    }
+
+    /* Timer Logic */
+    function startTimer() {
+      clearInterval(timer);
+      timeLeft = TOTAL_TIME;
+
+      const timerBox = document.getElementById('timer-box');
+      const timerDisplay = document.getElementById('time-left');
+      const progressBar = document.getElementById('timer-progress-bar');
+
+      timerBox.classList.remove('warning');
+      timerDisplay.innerText = timeLeft;
+      progressBar.style.width = '100%';
+
+      timer = setInterval(() => {
+        timeLeft--;
+        timerDisplay.innerText = timeLeft;
+
+        const pctLeft = (timeLeft / TOTAL_TIME) * 100;
+        progressBar.style.width = `${pctLeft}%`;
+
+        if (timeLeft <= 5 && timeLeft > 0) {
+          timerBox.classList.add('warning');
+          try { sound.playTick(); } catch(e){}
+        }
+
+        if (timeLeft <= 0) {
+          clearInterval(timer);
+          try { sound.playWrong(); } catch(e){}
+          handleOptionSelect(-1);
+        }
+      }, 1000);
+    }
+
+    /* Load Question */
+    function loadQuestion() {
+      if (currentQIndex >= currentQuestions.length) {
+        endQuiz();
+        return;
+      }
+
+      startTimer();
+
+      const qData = currentQuestions[currentQIndex];
+      document.getElementById('q-counter-badge').innerText = `Question ${currentQIndex + 1} of ${currentQuestions.length}`;
+      document.getElementById('question-text').innerText = qData.q;
+
+      const optionsGrid = document.getElementById('options-container');
+      optionsGrid.innerHTML = '';
+
+      qData.options.forEach((opt, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'option-btn';
+        btn.innerHTML = `<span>${opt}</span><span style="opacity:0.5; font-size:0.85rem;">[${String.fromCharCode(65 + idx)}]</span>`;
+        btn.onclick = () => handleOptionSelect(idx);
+        optionsGrid.appendChild(btn);
+      });
+    }
+
+    /* Handle Answer Selection */
+    function handleOptionSelect(selectedIndex) {
+      clearInterval(timer);
+      const qData = currentQuestions[currentQIndex];
+      const buttons = document.querySelectorAll('.option-btn');
+
+      buttons.forEach(btn => btn.disabled = true);
+
+      if (selectedIndex === qData.answer) {
+        score++;
+        try { sound.playCorrect(); } catch(e){}
+        if (buttons[selectedIndex]) buttons[selectedIndex].classList.add('correct');
+      } else {
+        try { sound.playWrong(); } catch(e){}
+        if (buttons[selectedIndex]) buttons[selectedIndex].classList.add('wrong');
+        if (buttons[qData.answer]) buttons[qData.answer].classList.add('correct');
+      }
+
+      setTimeout(() => {
+        currentQIndex++;
+        loadQuestion();
+      }, 1300);
+    }
+
+    /* End Quiz & Save to Global Database */
+    function endQuiz() {
+      showScreen('results');
+      try { sound.playFanfare(); } catch(e){}
+
+      document.getElementById('final-score').innerText = score;
+      const feedback = document.getElementById('feedback-message');
+
+      saveScoreToFirebase(currentStudent, currentSchool, score, currentChapter);
+
+      if (score >= 22) {
+        feedback.innerText = "🌟 Outstanding Performance! You are a Math Genius!";
+        speakEncouragement(`Outstanding performance ${currentStudent}! You scored ${score} out of 25!`);
+        confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
+      } else if (score >= 17) {
+        feedback.innerText = "👏 Great Job! Excellent effort!";
+        speakEncouragement(`Great job ${currentStudent}! You scored ${score} out of 25!`);
+      } else {
+        feedback.innerText = "💪 Keep practicing! You can do even better next time!";
+        speakEncouragement(`Good try ${currentStudent}! Keep practicing!`);
+      }
+    }
+
+    /* English Certificate Modal Logic */
+    function showCertificate() {
+      document.getElementById('cert-student-name').innerText = currentStudent;
+      document.getElementById('cert-school-disp').innerText = currentSchool || "School Administration";
+      
+      const now = new Date();
+      const formattedDate = `${now.getFullYear()} / ${now.getMonth()+1} / ${now.getDate()}`;
+      document.getElementById('cert-date').innerText = formattedDate;
+
+      document.getElementById('certificate-modal').classList.add('active');
+      confetti({ particleCount: 80, spread: 60 });
+    }
+
+    function closeCertificate() {
+      document.getElementById('certificate-modal').classList.remove('active');
+    }
+
+    function restartApp() {
+      showScreen('start');
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      listenToGlobalLeaderboard();
+    });
+  </script>
+</body>
+</html>
